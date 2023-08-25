@@ -15,14 +15,18 @@ const validateToken = asyncHandler(async (req, res, next)=>{
         throw new Error("User is not authorized or token is missing")
     }
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
-        if(err){
-            res.status(401);
-            throw new Error("User not authorized");
-        }        
-        req.user = decoded.user;
-        next();
-    })
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            if (err.name === 'TokenExpiredError') {
+                res.status(constants.UNAUTHORIZED).json({ message: 'Token expired. Please log in again.' });
+            } else {
+                res.status(constants.UNAUTHORIZED).json({ message: 'User not authorized.' });
+            }
+        } else {
+            req.user = decoded.user;
+            next();
+        }
+    });
 
 })
 
